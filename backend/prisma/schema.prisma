@@ -1,0 +1,52 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Filing {
+  id                  String        @id @default(uuid())
+  shipment_id         String
+  invoice_no          String
+  invoice_date        DateTime
+  port_code           String
+  exporter_gstin      String?       @db.Char(15)
+  import_export_flag  String        @db.Char(1)
+  total_invoice_value Decimal       @db.Decimal(14, 2)
+  currency_code       String        @db.Char(3)
+  submission_date     DateTime?
+  status              FilingStatus  @default(draft)
+  created_at          DateTime      @default(now())
+  updated_at          DateTime      @updatedAt
+  items               FilingItem[]
+
+  @@index([shipment_id])
+}
+
+model FilingItem {
+  id                   String   @id @default(uuid())
+  filing               Filing   @relation(fields: [filingId], references: [id])
+  filingId             String
+  item_id              String?
+  commodity_desc       String   @db.VarChar(200)
+  hs_code              String   @db.VarChar(10)
+  quantity             Decimal  @db.Decimal(12, 2)
+  unit_code            String   @db.VarChar(4)
+  unit_price           Decimal  @db.Decimal(14, 2)
+  line_item_value      Decimal  @db.Decimal(14, 2)
+  origin_country_code  String   @db.Char(2)
+  net_mass             Decimal? @db.Decimal(12, 3)
+  gross_mass           Decimal? @db.Decimal(12, 3)
+  created_at           DateTime @default(now())
+
+  @@index([filingId])
+}
+
+enum FilingStatus {
+  draft
+  submitted
+  error
+}
