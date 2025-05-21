@@ -1,14 +1,12 @@
-import { Router } from 'express';
-import {
-  createFiling,
-  getAllFilings,
-  getFilingById,
-} from '../controllers/filingController';
+import express from 'express';
+import { createFiling, getAllFilings, getFilingById, updateFiling, deleteFiling } from '../controllers/filingController';
 
-const router = Router();
+const router = express.Router();
 
-router.post('/filings', createFiling);
-router.get('/filings', getAllFilings);
-router.get('/filings/:id', getFilingById);
+router.get('/', getAllFilings);
+router.get('/:id', getFilingById);
+router.post('/', createFiling);
+router.put('/:id', updateFiling);
+router.delete('/:id', deleteFiling);
 
 export default router;

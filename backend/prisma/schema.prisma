@@ -10,10 +10,10 @@ generator client {
 model Filing {
   id                  String        @id @default(uuid())
   shipment_id         String
-  invoice_no          String
+  invoice_no          String        @unique                       
   invoice_date        DateTime
   port_code           String
-  exporter_gstin      String?       @db.Char(15)
+  exporter_gstin      String?       @db.Char(15) @default("")     
   import_export_flag  String        @db.Char(1)
   total_invoice_value Decimal       @db.Decimal(14, 2)
   currency_code       String        @db.Char(3)
@@ -22,9 +22,14 @@ model Filing {
   created_at          DateTime      @default(now())
   updated_at          DateTime      @updatedAt
   items               FilingItem[]
+  createdBy   User?     @relation("UserFilings", fields: [createdById], references: [id])
+  createdById String?   
+
+  @@index([createdById])
 
   @@index([shipment_id])
 }
+
 
 model FilingItem {
   id                   String   @id @default(uuid())
@@ -49,4 +54,21 @@ enum FilingStatus {
   draft
   submitted
   error
+}
+
+enum Role {
+  user
+  admin
+}
+
+model User {
+  id           String     @id @default(uuid())
+  gstin        String     @unique @db.Char(15)
+  email        String?    @unique
+  phone        String?    @unique
+  name         String?
+  role         Role       @default(user)
+  passwordHash String?    
+  created_at   DateTime   @default(now())
+  filings      Filing[]   @relation("UserFilings")
 }
