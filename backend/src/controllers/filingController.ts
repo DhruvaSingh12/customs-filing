@@ -7,6 +7,7 @@ const GSTIN_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 // CREATE
 export const createFiling: RequestHandler = async (req, res) => {
   try {
+    const body = req.body ?? {};
     const {
       shipment_id,
       invoice_no,
@@ -17,7 +18,12 @@ export const createFiling: RequestHandler = async (req, res) => {
       total_invoice_value,
       currency_code,
       items = [],
-    } = req.body;
+    } = body;
+
+    if (!shipment_id || !invoice_no || !invoice_date || !port_code || !import_export_flag || total_invoice_value == null || !currency_code) {
+      res.status(400).json({ error: 'Missing required fields' });
+      return;
+    }
 
     if (exporter_gstin && !GSTIN_REGEX.test(exporter_gstin)) {
       res.status(400).json({ error: 'Invalid exporter_gstin format' });
@@ -46,17 +52,20 @@ export const createFiling: RequestHandler = async (req, res) => {
     });
 
     res.status(201).json(filing);
+    return;
   } catch (error) {
     console.error('❌ createFiling error:', error);
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === 'P2002' &&
-      (error.meta?.target as string[]).includes('invoice_no')
+      Array.isArray(error.meta?.target) &&
+      (error.meta.target as string[]).includes('invoice_no')
     ) {
       res.status(409).json({ error: 'Invoice number already exists' });
       return;
     }
     res.status(500).json({ error: 'Failed to create filing' });
+    return;
   }
 };
 
@@ -65,12 +74,14 @@ export const getAllFilings: RequestHandler = async (_req, res) => {
   try {
     const filings = await prisma.filing.findMany({
       include: { items: true },
-      orderBy: { created_at: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
     res.status(200).json(filings);
+    return;
   } catch (error) {
     console.error('❌ getAllFilings error:', error);
     res.status(500).json({ error: 'Failed to fetch filings' });
+    return;
   }
 };
 
@@ -78,20 +89,17 @@ export const getAllFilings: RequestHandler = async (_req, res) => {
 export const getFilingById: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
-    const filing = await prisma.filing.findUnique({
-      where: { id },
-      include: { items: true },
-    });
-
+    const filing = await prisma.filing.findUnique({ where: { id }, include: { items: true } });
     if (!filing) {
       res.status(404).json({ error: 'Filing not found' });
       return;
     }
-
     res.status(200).json(filing);
+    return;
   } catch (error) {
     console.error('❌ getFilingById error:', error);
     res.status(500).json({ error: 'Failed to fetch filing' });
+    return;
   }
 };
 
@@ -99,6 +107,7 @@ export const getFilingById: RequestHandler = async (req, res) => {
 export const updateFiling: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
+    const body = req.body ?? {};
     const {
       shipment_id,
       invoice_no,
@@ -109,17 +118,14 @@ export const updateFiling: RequestHandler = async (req, res) => {
       total_invoice_value,
       currency_code,
       items = [],
-    } = req.body;
+    } = body;
 
     if (exporter_gstin && !GSTIN_REGEX.test(exporter_gstin)) {
       res.status(400).json({ error: 'Invalid exporter_gstin format' });
       return;
     }
 
-    const existing = await prisma.filing.findUnique({
-      where: { id },
-      select: { status: true, invoice_no: true },
-    });
+    const existing = await prisma.filing.findUnique({ where: { id }, select: { status: true, invoice_no: true } });
     if (!existing) {
       res.status(404).json({ error: 'Filing not found' });
       return;
@@ -129,7 +135,7 @@ export const updateFiling: RequestHandler = async (req, res) => {
       return;
     }
 
-    if (invoice_no !== existing.invoice_no) {
+    if (invoice_no && invoice_no !== existing.invoice_no) {
       const conflict = await prisma.filing.findUnique({ where: { invoice_no } });
       if (conflict) {
         res.status(409).json({ error: 'Invoice number already exists' });
@@ -154,9 +160,11 @@ export const updateFiling: RequestHandler = async (req, res) => {
     });
 
     res.status(200).json(updated);
+    return;
   } catch (error) {
     console.error('❌ updateFiling error:', error);
     res.status(500).json({ error: 'Failed to update filing' });
+    return;
   }
 };
 
@@ -166,8 +174,10 @@ export const deleteFiling: RequestHandler = async (req, res) => {
     const { id } = req.params;
     await prisma.filing.delete({ where: { id } });
     res.status(204).send();
+    return;
   } catch (error) {
     console.error('❌ deleteFiling error:', error);
     res.status(500).json({ error: 'Failed to delete filing' });
+    return;
   }
 };
