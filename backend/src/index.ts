@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import filingRoutes from './routes/filingRoutes';
+import userRouter from './routes/userRoutes';
+import authRouter from './routes/authRoutes';
+import { requireAuth, requireAdmin } from './middleware/requireAuth';
 
 dotenv.config();
 
@@ -11,7 +14,7 @@ const prisma = new PrismaClient();
 
 // Middleware
 app.use(cors());
-app.use(express.json()); 
+app.use(express.json());
 
 // Health check
 app.get('/health', async (_req, res) => {
@@ -25,8 +28,13 @@ app.get('/health', async (_req, res) => {
   }
 });
 
-// Filing routes
-app.use('/api/filings', filingRoutes);
+app.use('/api/users', userRouter);
+app.use('/api/auth', authRouter);
+// User routes
+app.use('/api/filings', requireAuth, filingRoutes);
+
+// Admin routes
+app.use('/api/admin/filings', requireAuth, requireAdmin, filingRoutes);
 
 // 404 fallback
 app.use((_req, res) => {
