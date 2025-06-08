@@ -1,0 +1,47 @@
+app/
+├── layout.tsx
+├── globals.css
+├── api/
+│   ├── auth/
+│   │   └── [...nextauth]/
+│   │       └── route.ts
+│   └── filings/
+│       ├── route.ts
+│       └── [id]/
+│           └── route.ts
+├── auth/
+│   ├── login/
+│   │   └── page.tsx
+│   ├── admin-login/
+│   │   └── page.tsx
+│   ├── signup/
+│   │   └── page.tsx
+│   └── admin-signup/
+│       └── page.tsx
+├── dashboard/
+│   ├── page.tsx
+│   └── filings/
+│       ├── [id]/
+│       │   └── page.tsx
+│       └── new/
+│           └── page.tsx
+└── admin/
+    ├── page.tsx
+    └── filings/
+        ├── [id]/
+        │   └── page.tsx
+        └── new/
+            └── page.tsx
+components/
+├── AuthForm.tsx
+├── DashboardLayout.tsx
+├── DashboardTable.tsx
+└── FilingForm.tsx
+lib/
+├── prisma.ts
+└── nextauth.config.ts
+types/
+├── auth.ts
+├── filing.ts
+└── next-auth.d.ts
+middleware.ts

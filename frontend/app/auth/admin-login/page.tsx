@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/nextauth.config"
 import { AuthForm } from "@/components/AuthForm"
 import { Role } from "@prisma/client"
 
-export default async function SignupPage() {
+export default async function AdminLoginPage() {
   const session = await getServerSession(authOptions)
 
   if (session) {
@@ -13,7 +13,12 @@ export default async function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <AuthForm type="user" mode="signup" title="Create your account" description="Sign up to access the dashboard" />
+      <AuthForm
+        type="admin"
+        mode="login"
+        title="Admin Sign In"
+        description="Enter your admin credentials to access the admin panel"
+      />
     </div>
   )
 }

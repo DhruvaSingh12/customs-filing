@@ -1,24 +1,26 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type React from "react"
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
 import { Session } from "@/providers/SessionProvider";
 
+const inter = Inter({ subsets: ["latin"] })
+
 export const metadata: Metadata = {
-  title: "Customs Filing",
-  description: "A simple customs filing system",
-};
+  title: "Filing Management System",
+  description: "Manage your filings with ease",
+}
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
-      <body>
-        <Session>
-          {children}
-        </Session>
+      <body className={inter.className}>
+        <Session>{children}</Session>
       </body>
     </html>
-  );
+  )
 }

@@ -1,35 +1,53 @@
-import { NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
-import { NextRequest } from 'next/server';
+import { withAuth } from "next-auth/middleware"
+import { NextResponse } from "next/server"
 
-export async function middleware(req: NextRequest) {
-  const path = req.nextUrl.pathname;
-
-  // Define paths that are considered authenticated
-  const isAuthPath = path.startsWith('/auth');
-  const isApiPath = path.startsWith('/api');
-  const isPublicPath = isAuthPath || isApiPath || path === '/';
-
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-
-  // Redirect unauthenticated users to login page
-  if (!token && !isPublicPath) {
-    const url = new URL('/auth/signin', req.url);
-    url.searchParams.set('callbackUrl', path);
-    return NextResponse.redirect(url);
-  }
-
-  // Check for admin routes
-  if (path.startsWith('/admin') && token?.role !== 'admin') {
-    return NextResponse.redirect(new URL('/', req.url));
-  }
-
-  return NextResponse.next();
+enum Role {
+  user = "user",
+  admin = "admin"
 }
 
-// Configure matcher for paths that trigger middleware
+export default withAuth(
+  function middleware(req) {
+    const { pathname } = req.nextUrl
+    const token = req.nextauth.token
+
+    // Admin routes protection
+    if (pathname.startsWith("/admin")) {
+      if (!token || token.role !== Role.admin) {
+        return NextResponse.redirect(new URL("/auth/admin-login", req.url))
+      }
+    }
+
+    // User dashboard protection
+    if (pathname.startsWith("/dashboard")) {
+      if (!token) {
+        return NextResponse.redirect(new URL("/auth/login", req.url))
+      }
+    }
+
+    return NextResponse.next()
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        const { pathname } = req.nextUrl
+
+        // Allow access to auth pages without token
+        if (pathname.startsWith("/auth/")) {
+          return true
+        }
+
+        // Require token for protected routes
+        if (pathname.startsWith("/admin") || pathname.startsWith("/dashboard")) {
+          return !!token
+        }
+
+        return true
+      },
+    },
+  },
+)
+
 export const config = {
-  matcher: [
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)',
-  ],
-};
+  matcher: ["/admin/:path*", "/dashboard/:path*", "/auth/:path*"],
+}
