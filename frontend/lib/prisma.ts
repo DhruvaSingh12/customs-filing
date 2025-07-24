@@ -1,9 +1,36 @@
-import { PrismaClient } from "@prisma/client"
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+export async function signupUser(userData: {
+  name: string;
+  email: string;
+  gstin: string;
+  password: string;
+  role: 'user' | 'admin';
+}) {
+  const res = await fetch('http://localhost:4000/api/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userData),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.error || 'Signup failed');
+  }
+
+  return res.json();
 }
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+export async function loginUser(email: string, password: string) {
+  const res = await fetch('http://localhost:4000/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.error || 'Login failed');
+  }
+
+  return res.json();
+}
